@@ -1,1 +1,4 @@
-# things-splitter
+things-splitter
+=============
+
+1.화면에서 내부 구분선으로 화면의 싸이즈를 조정하는 용도다.
