@@ -2,193 +2,221 @@
 @license
 Copyright © HatioLab Inc. All rights reserved.
 -->
-
 <!--
-`things-splitter` provides a split bar and dragging on the split bar
-will resize the sibling element.  Use its `direction` property to indicate
-which sibling element to be resized and the orientation.  Usually you would want
-to use `things-splitter` along with flex layout so that the other sibling
-element can be _flexible_.
+`things-splitter`는 화면에서 분할선을 제공하여 화면의 크리를 분할 시키는 용도로 사용한다.
+많은 direction이라는 속성으로 분리를 시키고 있는데 화면을 자동으로 크지고 작아지게 하려면 direction의 
+반대 element가 자동으로 사이즈를 맞출 수 있게 Class를 설정한 후 많이 사용한다.
 
 Example:
 
-    <div horizontal layout>
+    <div class="layout horizontal">
       <div>left</div>
       <things-splitter direction="left"></things-splitter>
-      <div flex>right</div>
+      <div class="layout flex">right</div>
     </div>
 
-In the above example, dragging the splitter will resize the _left_ element.  And
-since the parent container is a flexbox and the _right_ element has
-`flex`, the _right_ element will be auto-resized.
-
-For horizontal splitter set `direction` to `up` or `down`.
+위 예제에서는 왼쪽의 화면 싸이즈를 조정하지만 왼쪽의 화면 싸이즈가 작아지면서 flex layout으로 자동으로 오른쪽을 체워준다.
 
 Example:
 
-    <div vertical layout>
+    <div class="layout horizontal">
       <div>top</div>
       <things-splitter direction="up"></things-splitter>
-      <div flex>bottom</div>
+      <div class="layout flex">bottom</div>
     </div>
+
+
+따라서 상하 분할 layout은 up이나 down을 사용하고 좌우 분할은 left/right를 사용한다.
+
+단, things-grid는 그리드에서는 화면싸이즈의 변화를 window size변화만 감지할 수 밖에 없어서 size변화가 완료 되면
+grid의 화면을 fit시켜 줘야 한다.
+
 
 @demo demo/index.html
 -->
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
-<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
-
 <dom-module id="things-splitter">
   <style>
-    :host {
-      display: block;
-      width: 12px;
-      background: #efefef url(handle.svg) no-repeat center;
-      box-shadow: inset 0 0 2px 1px #ccc;
-      cursor: col-resize;
-    }
+  :host {
+    display: block;
+    width: 12px;
+    background: #efefef url(handle.svg) no-repeat center;
+    box-shadow: inset 0 0 2px 1px #ccc;
+    cursor: col-resize;
+  }
 
-    :host(.horizontal) {
-      width: auto;
-      height: 12px;
-      cursor: row-resize;
-      background-image: url(handle-h.svg);
-    }
+   :host(.horizontal) {
+    width: auto;
+    height: 12px;
+    cursor: row-resize;
+    background-image: url(handle-h.svg);
+  }
 
-    :host(:hover, :active) {
-      background-color: #ddd;
-    }
+   :host(:hover, :active) {
+    background-color: #ddd;
+  }
   </style>
   <template>
   </template>
   <script>
-    Polymer({
-      is: 'things-splitter',
-      behaviors: [Polymer.IronResizableBehavior],
-      properties: {
-        /**
-         * By default the parent and siblings of the splitter are set to overflow hidden. This helps
-         * avoid elements bleeding outside the splitter regions. Set this property to true to allow
-         * these elements to overflow.
-         *
-         * @attribute allowOverflow
-         * @type boolean
-         * @default false
-         */
-        allowOverflow: {
-          type: Boolean,
-          value: false,
-          notify: true
-        },
-        /**
-         * Possible values are `left`, `right`, `up` and `down`.
-         *
-         * @attribute direction
-         * @type string
-         * @default 'left'
-         */
-        direction: {
-          type: String,
-          value: 'left',
-          notify: true,
-          observer: 'directionChanged'
-        },
-        /**
-         * Locks the split bar so it can't be dragged.
-         *
-         * @attribute locked
-         * @type boolean
-         * @default false
-         */
-        locked: {
-          type: Boolean,
-          value: false,
-          notify: true
-        },
-        /**
-         * Minimum width to which the splitter target can be sized, e.g. 
-         * `minSize="100px"`
-         *
-         * @attribute minSize
-         * @type string
-         * @default ''
-         */
-        minSize: {
-          type: String,
-          value: '',
-          notify: true
-        },
-        // Listen for resize requests on parent, since splitter is peer to resizables
-        resizerIsPeer: {
-          type: Boolean,
-          value: true
-        },
-        target: { observer: 'targetChanged' }
+  Polymer({
+    is: 'things-splitter',
+    behaviors: [Polymer.IronResizableBehavior],
+    properties: {
+
+      /**
+       * defualt로 splitter의 범위를 떠나지 않게 하기위하여 overflow hidden으로 처리가 됨, 필요에 따라서 변경가능
+       * ******
+       * @attribute allowOverflow
+       * @type boolean
+       * @default false
+       */
+      allowOverflow: {
+        type: Boolean,
+        value: false
       },
-      ready: function () {
-        this.directionChanged();
-        if (!this.allowOverflow) {
-          this.set('parentNode.style.overflow', this.set('nextElementSibling.style.overflow', this.set('previousElementSibling.style.overflow', 'hidden')));
-        }
+      /**
+       * 변경하는 Element가 splitter와 위하여 있는 곳을 표현하는 `left`, `right`, `up` and `down`.
+       * ******
+       * @attribute direction
+       * @type string
+       * @default 'left'
+       */
+      direction: {
+        type: String,
+        value: 'left',
+        observer: '_directionChanged'
       },
-      //attached: function () {
-      //  this.resizerAttachedHandler();
-      //},
-      //detached: function () {
-      //  this.resizerDetachedHandler();
-      //},
-      directionChanged: function () {
-        this.isNext = this.direction === 'right' || this.direction === 'down';
-        this.horizontal = this.direction === 'up' || this.direction === 'down';
-        this.update();
+      /**
+       * splitter로 사이즈 변경이 불가하도록 설정
+       * ******
+       * @attribute locked
+       * @type boolean
+       * @default false
+       */
+      locked: {
+        type: Boolean,
+        value: false
       },
-      update: function () {
-        this.target = this.isNext ? this.nextElementSibling : this.previousElementSibling;
-        this.dimension = this.horizontal ? 'height' : 'width';
-        Polymer.dom(this).classList.toggle('horizontal', this.horizontal);
+      /**
+       * 크기 변경 대상의 최소 Size를 설정
+       * `minSize="100px"`
+       * ******
+       * @attribute minSize
+       * @type string
+       * @default ''
+       */
+      minSize: {
+        type: String,
+        value: '0px',
+        observer:'_minSizeChanged'
       },
-      targetChanged: function (_, old) {
-        if (old) {
-          old.style[old.__splitterMinSize] = '';
-        }
-        var min = this.set('target.__splitterMinSize', this.horizontal ? 'minHeight' : 'minWidth');
-        this.set('target.style' + ('.' + min), this.minSize);
-      },
-      //trackStart: function () {
-      //  this.update();
-      //  this.size = parseInt(getComputedStyle(this.target)[this.dimension]);
-      //},
-      track: function (e) {
-        if (this.locked) {
-          return;
-        }
-        switch(e.detail.state) {
-          case 'start':
-            //this.message = 'Tracking started!';
-            this.update();
-            this.size = parseInt(getComputedStyle(this.target)[this.dimension]);
-            break;
-          case 'track':
-            //console.log(e.detail.x);
-            //this.message = 'Tracking in progress... ' +
-            //  e.detail.x + ', ' + e.detail.y;
-            var d = e.detail[this.horizontal ? 'dy' : 'dx'];
-            this.set('target.style' + ('.' + this.dimension), this.size + (this.isNext ? -d : d) + 'px');
-            this.notifyResize();
-            break;
-          case 'end':
-            //this.message = 'Tracking ended!';
-            break;
-        }
-      },
-      preventSelection: function (e) {
-        //e.preventDefault();
-      },
-      listeners: {
-        //trackstart: 'trackStart',
-        'track': 'track',
-        'down': 'preventSelection'
+
+      _target: { observer: '_targetChanged' }
+    },
+    listeners: {
+      'track': '_track',
+    },
+    ready: function() {
+      this._directionChanged();
+      if (!this.allowOverflow) {
+        this.set('parentNode.style.overflow', this.set('nextElementSibling.style.overflow', this.set('previousElementSibling.style.overflow', 'hidden')));
       }
-    });
+    },
+    /**
+     * target과 dimension을 다시 확인하여 horizontal class를 toggle시킨다. class에 horizontal이 있는 경우
+     * 아래 방향으로 된 SVG이미지를 화면에 제공한다.
+     * *******
+     * 
+     */
+    update: function() {
+      this._target = this.isNext ? this.nextElementSibling : this.previousElementSibling;
+      this.dimension = this.horizontal ? 'height' : 'width';
+      Polymer.dom(this).classList.toggle('horizontal', this.horizontal);
+    },
+    /**
+     * splitter가 resizing 시작할때
+     *
+     * @event things-splitter-resize-start
+     * @param {Object} event.model
+     */
+    /**
+     * splitter가 resizing 진행 중일때
+     *
+     * @event things-splitter-resizeing
+     * @param {Object} event.model
+     */
+    /**
+     * splitter가 resizing 완료 했을때
+     *
+     * @event things-splitter-resize-end
+     * @param {Object} event.model
+     */
+    
+    /**
+     * Drag Drop을 tracking하여 target element의 사이즈를 변경한다.
+     * *******
+     * @param {Object} event
+     */
+    _track: function(e) {
+      if (this.locked) {
+        return;
+      }
+      switch (e.detail.state) {
+        case 'start':
+          this.fire('things-splitter-resize-start', e.model);
+          this.update();
+          this.size = parseInt(getComputedStyle(this._target)[this.dimension]);
+          break;
+        case 'track':
+          var d = e.detail[this.horizontal ? 'dy' : 'dx'];
+          this.set('_target.style' + ('.' + this.dimension), this.size + (this.isNext ? -d : d) + 'px');
+          this.fire('things-splitter-resizeing', e.model);
+          this.notifyResize();
+          break;
+        case 'end':
+          this.fire('things-splitter-resize-end', e.model);
+          break;
+      }
+    },
+    /**
+     * direction값의 변화를 감지하여 horizontal로 처리할 것인지를 결정한다.
+     * 판단 후 update를 호출하여 class를 토클힌다.
+     * *******
+     * 
+     */
+    _directionChanged: function() {
+      this.isNext = this.direction === 'right' || this.direction === 'down';
+      this.horizontal = this.direction === 'up' || this.direction === 'down';
+      this.update();
+      this.notifyPath('_target');
+    },
+    /**
+     * target에 최소크기 설정
+     * *******
+     * 
+     */
+    _targetChanged: function(_, old) {
+      if (old) {
+        old.style[old.__splitterMinSize] = '';
+      }
+      this.set('_target.__splitterMinSize', this.horizontal ? 'minHeight' : 'minWidth');
+      if(_){
+        this._min = this.horizontal ? 'minHeight' : 'minWidth';
+        this.set('_target.style' + ('.' + this._min), this.minSize);
+      }
+    },
+    /**
+     * target에 최소크기 설정
+     * *******
+     * 
+     */
+    _minSizeChanged: function(minSize){
+      if(this._target){
+        this.set('_target.style' + ('.' + this._min), minSize);
+      }
+    }
+  });
   </script>
 </dom-module>
