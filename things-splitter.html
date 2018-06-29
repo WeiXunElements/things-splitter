@@ -37,27 +37,23 @@ grid의 화면을 fit시켜 줘야 한다.
 <link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
 <dom-module id="things-splitter">
-  <style>
-  :host {
-    display: block;
-    width: 12px;
-    background: #efefef url(handle.svg) no-repeat center;
-    box-shadow: inset 0 0 2px 1px #ccc;
-    cursor: col-resize;
-  }
-
-   :host(.horizontal) {
-    width: auto;
-    height: 12px;
-    cursor: row-resize;
-    background-image: url(handle-h.svg);
-  }
-
-   :host(:hover, :active) {
-    background-color: #ddd;
-  }
-  </style>
   <template>
+    <style>
+    :host {
+      display: block;
+      width: 12px;
+      background: #efefef url(handle.svg) no-repeat center;
+      box-shadow: inset 0 0 2px 1px #ccc;
+      cursor: col-resize;
+    }
+
+     :host(.horizontal) {
+      width: auto;
+      height: 12px;
+      cursor: row-resize;
+      background-image: url(handle-h.svg);
+    }
+    </style>
   </template>
   <script>
   Polymer({
