@@ -1,6 +1,6 @@
 <!--
 @license
-Copyright © HatioLab Inc. All rights reserved.
+Copyright © 2015-2021 Shenzhen Weixun All rights reserved.
 -->
 <!--
 `things-splitter`는 화면에서 분할선을 제공하여 화면의 크리를 분할 시키는 용도로 사용한다.
@@ -34,185 +34,187 @@ grid의 화면을 fit시켜 줘야 한다.
 
 @demo demo/index.html
 -->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html">
+<link rel="import" href="../polymer/polymer.html" />
+<link rel="import" href="../iron-resizable-behavior/iron-resizable-behavior.html" />
 <dom-module id="things-splitter">
   <template>
     <style>
-    :host {
-      display: block;
-      width: 12px;
-      background: #efefef url(handle.svg) no-repeat center;
-      box-shadow: inset 0 0 2px 1px #ccc;
-      cursor: col-resize;
-    }
+      :host {
+        display: block;
+        width: 12px;
+        background: #efefef url(handle.svg) no-repeat center;
+        box-shadow: inset 0 0 2px 1px #ccc;
+        cursor: col-resize;
+      }
 
-     :host(.horizontal) {
-      width: auto;
-      height: 12px;
-      cursor: row-resize;
-      background-image: url(handle-h.svg);
-    }
+      :host(.horizontal) {
+        width: auto;
+        height: 12px;
+        cursor: row-resize;
+        background-image: url(handle-h.svg);
+      }
     </style>
   </template>
   <script>
-  Polymer({
-    is: 'things-splitter',
-    behaviors: [Polymer.IronResizableBehavior],
-    properties: {
+    Polymer({
+      is: 'things-splitter',
+      behaviors: [Polymer.IronResizableBehavior],
+      properties: {
+        /**
+         * defualt로 splitter의 범위를 떠나지 않게 하기위하여 overflow hidden으로 처리가 됨, 필요에 따라서 변경가능
+         * ******
+         * @attribute allowOverflow
+         * @type boolean
+         * @default false
+         */
+        allowOverflow: {
+          type: Boolean,
+          value: false,
+        },
+        /**
+         * 변경하는 Element가 splitter와 위하여 있는 곳을 표현하는 `left`, `right`, `up` and `down`.
+         * ******
+         * @attribute direction
+         * @type string
+         * @default 'left'
+         */
+        direction: {
+          type: String,
+          value: 'left',
+          observer: '_directionChanged',
+        },
+        /**
+         * splitter로 사이즈 변경이 불가하도록 설정
+         * ******
+         * @attribute locked
+         * @type boolean
+         * @default false
+         */
+        locked: {
+          type: Boolean,
+          value: false,
+        },
+        /**
+         * 크기 변경 대상의 최소 Size를 설정
+         * `minSize="100px"`
+         * ******
+         * @attribute minSize
+         * @type string
+         * @default ''
+         */
+        minSize: {
+          type: String,
+          value: '0px',
+          observer: '_minSizeChanged',
+        },
+
+        _target: { observer: '_targetChanged' },
+      },
+      listeners: {
+        track: '_track',
+      },
+      ready: function () {
+        this._directionChanged();
+        if (!this.allowOverflow) {
+          this.set(
+            'parentNode.style.overflow',
+            this.set('nextElementSibling.style.overflow', this.set('previousElementSibling.style.overflow', 'hidden'))
+          );
+        }
+      },
+      /**
+       * target과 dimension을 다시 확인하여 horizontal class를 toggle시킨다. class에 horizontal이 있는 경우
+       * 아래 방향으로 된 SVG이미지를 화면에 제공한다.
+       * *******
+       *
+       */
+      update: function () {
+        this._target = this.isNext ? this.nextElementSibling : this.previousElementSibling;
+        this.dimension = this.horizontal ? 'height' : 'width';
+        Polymer.dom(this).classList.toggle('horizontal', this.horizontal);
+      },
+      /**
+       * splitter가 resizing 시작할때
+       *
+       * @event things-splitter-resize-start
+       * @param {Object} event.model
+       */
+      /**
+       * splitter가 resizing 진행 중일때
+       *
+       * @event things-splitter-resizeing
+       * @param {Object} event.model
+       */
+      /**
+       * splitter가 resizing 완료 했을때
+       *
+       * @event things-splitter-resize-end
+       * @param {Object} event.model
+       */
 
       /**
-       * defualt로 splitter의 범위를 떠나지 않게 하기위하여 overflow hidden으로 처리가 됨, 필요에 따라서 변경가능
-       * ******
-       * @attribute allowOverflow
-       * @type boolean
-       * @default false
+       * Drag Drop을 tracking하여 target element의 사이즈를 변경한다.
+       * *******
+       * @param {Object} event
        */
-      allowOverflow: {
-        type: Boolean,
-        value: false
+      _track: function (e) {
+        if (this.locked) {
+          return;
+        }
+        switch (e.detail.state) {
+          case 'start':
+            this.fire('things-splitter-resize-start', e.model);
+            this.update();
+            this.size = parseInt(getComputedStyle(this._target)[this.dimension]);
+            break;
+          case 'track':
+            var d = e.detail[this.horizontal ? 'dy' : 'dx'];
+            this.set('_target.style' + ('.' + this.dimension), this.size + (this.isNext ? -d : d) + 'px');
+            this.fire('things-splitter-resizeing', e.model);
+            this.notifyResize();
+            break;
+          case 'end':
+            this.fire('things-splitter-resize-end', e.model);
+            break;
+        }
       },
       /**
-       * 변경하는 Element가 splitter와 위하여 있는 곳을 표현하는 `left`, `right`, `up` and `down`.
-       * ******
-       * @attribute direction
-       * @type string
-       * @default 'left'
+       * direction값의 변화를 감지하여 horizontal로 처리할 것인지를 결정한다.
+       * 판단 후 update를 호출하여 class를 토클힌다.
+       * *******
+       *
        */
-      direction: {
-        type: String,
-        value: 'left',
-        observer: '_directionChanged'
+      _directionChanged: function () {
+        this.isNext = this.direction === 'right' || this.direction === 'down';
+        this.horizontal = this.direction === 'up' || this.direction === 'down';
+        this.update();
+        this.notifyPath('_target');
       },
       /**
-       * splitter로 사이즈 변경이 불가하도록 설정
-       * ******
-       * @attribute locked
-       * @type boolean
-       * @default false
+       * target에 최소크기 설정
+       * *******
+       *
        */
-      locked: {
-        type: Boolean,
-        value: false
+      _targetChanged: function (_, old) {
+        if (old) {
+          old.style[old.__splitterMinSize] = '';
+        }
+        this.set('_target.__splitterMinSize', this.horizontal ? 'minHeight' : 'minWidth');
+        if (_) {
+          this._min = this.horizontal ? 'minHeight' : 'minWidth';
+          this.set('_target.style' + ('.' + this._min), this.minSize);
+        }
       },
       /**
-       * 크기 변경 대상의 최소 Size를 설정
-       * `minSize="100px"`
-       * ******
-       * @attribute minSize
-       * @type string
-       * @default ''
+       * target에 최소크기 설정
+       * *******
+       *
        */
-      minSize: {
-        type: String,
-        value: '0px',
-        observer:'_minSizeChanged'
+      _minSizeChanged: function (minSize) {
+        if (this._target) {
+          this.set('_target.style' + ('.' + this._min), minSize);
+        }
       },
-
-      _target: { observer: '_targetChanged' }
-    },
-    listeners: {
-      'track': '_track',
-    },
-    ready: function() {
-      this._directionChanged();
-      if (!this.allowOverflow) {
-        this.set('parentNode.style.overflow', this.set('nextElementSibling.style.overflow', this.set('previousElementSibling.style.overflow', 'hidden')));
-      }
-    },
-    /**
-     * target과 dimension을 다시 확인하여 horizontal class를 toggle시킨다. class에 horizontal이 있는 경우
-     * 아래 방향으로 된 SVG이미지를 화면에 제공한다.
-     * *******
-     * 
-     */
-    update: function() {
-      this._target = this.isNext ? this.nextElementSibling : this.previousElementSibling;
-      this.dimension = this.horizontal ? 'height' : 'width';
-      Polymer.dom(this).classList.toggle('horizontal', this.horizontal);
-    },
-    /**
-     * splitter가 resizing 시작할때
-     *
-     * @event things-splitter-resize-start
-     * @param {Object} event.model
-     */
-    /**
-     * splitter가 resizing 진행 중일때
-     *
-     * @event things-splitter-resizeing
-     * @param {Object} event.model
-     */
-    /**
-     * splitter가 resizing 완료 했을때
-     *
-     * @event things-splitter-resize-end
-     * @param {Object} event.model
-     */
-    
-    /**
-     * Drag Drop을 tracking하여 target element의 사이즈를 변경한다.
-     * *******
-     * @param {Object} event
-     */
-    _track: function(e) {
-      if (this.locked) {
-        return;
-      }
-      switch (e.detail.state) {
-        case 'start':
-          this.fire('things-splitter-resize-start', e.model);
-          this.update();
-          this.size = parseInt(getComputedStyle(this._target)[this.dimension]);
-          break;
-        case 'track':
-          var d = e.detail[this.horizontal ? 'dy' : 'dx'];
-          this.set('_target.style' + ('.' + this.dimension), this.size + (this.isNext ? -d : d) + 'px');
-          this.fire('things-splitter-resizeing', e.model);
-          this.notifyResize();
-          break;
-        case 'end':
-          this.fire('things-splitter-resize-end', e.model);
-          break;
-      }
-    },
-    /**
-     * direction값의 변화를 감지하여 horizontal로 처리할 것인지를 결정한다.
-     * 판단 후 update를 호출하여 class를 토클힌다.
-     * *******
-     * 
-     */
-    _directionChanged: function() {
-      this.isNext = this.direction === 'right' || this.direction === 'down';
-      this.horizontal = this.direction === 'up' || this.direction === 'down';
-      this.update();
-      this.notifyPath('_target');
-    },
-    /**
-     * target에 최소크기 설정
-     * *******
-     * 
-     */
-    _targetChanged: function(_, old) {
-      if (old) {
-        old.style[old.__splitterMinSize] = '';
-      }
-      this.set('_target.__splitterMinSize', this.horizontal ? 'minHeight' : 'minWidth');
-      if(_){
-        this._min = this.horizontal ? 'minHeight' : 'minWidth';
-        this.set('_target.style' + ('.' + this._min), this.minSize);
-      }
-    },
-    /**
-     * target에 최소크기 설정
-     * *******
-     * 
-     */
-    _minSizeChanged: function(minSize){
-      if(this._target){
-        this.set('_target.style' + ('.' + this._min), minSize);
-      }
-    }
-  });
+    });
   </script>
 </dom-module>

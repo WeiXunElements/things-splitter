@@ -1,91 +1,89 @@
 <!--
 @license
-Copyright © HatioLab Inc. All rights reserved.
+Copyright © 2015-2021 Shenzhen Weixun All rights reserved.
 -->
 
 <!DOCTYPE html>
-<html><head>
-  <title>things-splitter</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  
-  
-  <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
-  <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
+<html>
+  <head>
+    <title>things-splitter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 
-  <link rel="import" href="../things-splitter.html">
-  
-  <style>
-  
-    .container {
-      height: 240px;
-      border: 4px solid #aaa;
-    }
-    
-    #box1, #box3, #box5, #box6 {
-      width: 100px;
-    }
-    
-    #box2, #box4 {
-      height: 40px;
-    }
-    
-  </style>
-  
-  <style is="custom-style">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html" />
 
-    .layout {
-      @apply(--layout);
-    }
-    .horizontal {
-      @apply(--layout-horizontal);
-    }
-    .vertical {
-      @apply(--layout-vertical);
-    }
-    .flex {
-      @apply(--layout-flex);
-    }
-  </style>
-  <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html">
-</head>
-<body unresolved="">
+    <link rel="import" href="../things-splitter.html" />
 
-  <div class="container horizontal layout">
-    <div>left (min: 128px)</div>
-    <things-splitter id="minSizable" min-size="128px" direction="left" ></things-splitter>
-    <div class="flex">right</div>
-  </div>
-  
-  <br>
-  
-  <div class="container vertical layout">
-    <div id="box2">top</div>
-    <things-splitter direction="up"></things-splitter>
-    <div class="flex">bottom</div>
-  </div>
-  
-  <br>
-  
-  <div class="container horizontal layout">
-    <div id="box3">1</div>
-    <things-splitter direction="left"></things-splitter>
-    <div class="layout flex vertical">
-      <div id="box4">2</div>
-      <things-splitter direction="up"></things-splitter>
-      <div class="flex">3</div>
+    <style>
+      .container {
+        height: 240px;
+        border: 4px solid #aaa;
+      }
+
+      #box1,
+      #box3,
+      #box5,
+      #box6 {
+        width: 100px;
+      }
+
+      #box2,
+      #box4 {
+        height: 40px;
+      }
+    </style>
+
+    <style is="custom-style">
+      .layout {
+        @apply (--layout);
+      }
+      .horizontal {
+        @apply (--layout-horizontal);
+      }
+      .vertical {
+        @apply (--layout-vertical);
+      }
+      .flex {
+        @apply (--layout-flex);
+      }
+    </style>
+    <link rel="import" href="../../iron-flex-layout/iron-flex-layout.html" />
+  </head>
+  <body unresolved="">
+    <div class="container horizontal layout">
+      <div>left (min: 128px)</div>
+      <things-splitter id="minSizable" min-size="128px" direction="left"></things-splitter>
+      <div class="flex">right</div>
     </div>
-  </div>
-  
-  <br>
-  
-  <div class="container horizontal layout">
-    <div id="box5">left</div>
-    <things-splitter direction="left"></things-splitter>
-    <div class="flex">center</div>
-    <things-splitter direction="right"></things-splitter>
-    <div id="box6">right</div>
-  </div>
-  
 
+    <br />
 
-</body></html>
+    <div class="container vertical layout">
+      <div id="box2">top</div>
+      <things-splitter direction="up"></things-splitter>
+      <div class="flex">bottom</div>
+    </div>
+
+    <br />
+
+    <div class="container horizontal layout">
+      <div id="box3">1</div>
+      <things-splitter direction="left"></things-splitter>
+      <div class="layout flex vertical">
+        <div id="box4">2</div>
+        <things-splitter direction="up"></things-splitter>
+        <div class="flex">3</div>
+      </div>
+    </div>
+
+    <br />
+
+    <div class="container horizontal layout">
+      <div id="box5">left</div>
+      <things-splitter direction="left"></things-splitter>
+      <div class="flex">center</div>
+      <things-splitter direction="right"></things-splitter>
+      <div id="box6">right</div>
+    </div>
+  </body>
+</html>
